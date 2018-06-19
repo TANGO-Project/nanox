@@ -67,11 +67,19 @@ class GPUPlugin : public ArchPlugin
             if ( core == NULL ) {
                core = sys.getSMPPlugin()->getLastFreeSMPProcessorAndReserve();
                if ( core == NULL ) {
-                  fatal0("Unable to get a core to run the GPU thread.");
+                  core = sys.getSMPPlugin()->getLastSMPProcessor();
+                  if ( core == NULL ) {
+                     fatal0("Unable to get a core to run the GPU thread.");
+                  }
+                  core->setNumFutureThreads( core->getNumFutureThreads() + 1 );
+                  warning0("Unable to get an exclusive cpu to run the CPU thread. The thread will run on PE "<< core->getId());
+               } else {
+                  core->setNumFutureThreads( 1 );
                }
                warning0("Unable to get a cpu on numa node " << node << " to run the CPU thread. Will run on numa node "<< core->getNumaNode());
+            } else {
+               core->setNumFutureThreads( 1 );
             }
-            core->setNumFutureThreads( 1 );
             
             //bool reserved;
             //unsigned pe = sys.reservePE( numa, node, reserved );
